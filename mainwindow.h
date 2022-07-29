@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QThread>
+#include <QSerialPortInfo>
 #include "generatedatathread.h"
 
 namespace Ui {
@@ -16,23 +17,18 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
-    QString MAGA;
 
 private slots:
-    void on_pushButton_write_1_clicked();
 
-    void on_pushButton_write_2_clicked();
 
-    void on_pushButton_start_clicked();
-
-    void on_pushButton_stop_clicked();
+    void on_pushButton_clicked();
 
 private:
     Ui::MainWindow *ui;
-    QThread thread_1;
-    QThread thread_2;
-    generatedataThread Object_1;
-    generatedataThread Object_2;
+    QThread *thread;
+    generatedataThread *ObjGenerate;
+
+    int num_port;
 };
 
 #endif // MAINWINDOW_H

@@ -2,6 +2,7 @@
 #define GENERATEDATATHREAD_H
 
 #include <QObject>
+#include <QSerialPort>
 
 class generatedataThread : public QObject
 {
@@ -12,12 +13,14 @@ public:
     QString message;
 
 private:
-
+QSerialPort *port;
 
 signals:
 
 public slots:
     void run();
+    void setRate_slot(int rate);
+
 };
 
 #endif // GENERATEDATATHREAD_H
