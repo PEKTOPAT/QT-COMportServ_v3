@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QThread>
+#include <QDebug>
 #include <QSerialPortInfo>
 #include "generatedatathread.h"
 
@@ -20,15 +21,24 @@ public:
 
 private slots:
 
+    void on_comboBox_portSpeed_currentIndexChanged(int index);
+    void on_push_connect_clicked();
+    void slot_push_connect(bool status);
+    void slot_push_disconnect(bool status);
 
-    void on_pushButton_clicked();
+    void on_push_disconnect_clicked();
 
 private:
     Ui::MainWindow *ui;
     QThread *thread;
     generatedataThread *ObjGenerate;
-
     int num_port;
+    QString namePort;
+
+    void debugTextEdit(bool status, QString debMSG);
+signals:
+    void signalOpenPort(QString);
+    void signalClosePort();
 };
 
 #endif // MAINWINDOW_H

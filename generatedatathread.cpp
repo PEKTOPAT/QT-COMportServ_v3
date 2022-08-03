@@ -1,8 +1,15 @@
 #include "generatedatathread.h"
 #include <QDebug>
 
-generatedataThread::generatedataThread(QObject *parent) : QObject(parent)
+generatedataThread::generatedataThread(QObject *parent) :
+    QObject(parent)
 {
+    flagRecieve_ch1 = true;
+    flagRecieve_ch2 = true;
+    sizeInfo_ch1 = 50;
+    sizeInfo_ch2 = 50;
+    sizePackage = 53;
+
     port = new QSerialPort(this);
     port->setDataBits(QSerialPort::Data8);
     port->setFlowControl(QSerialPort::NoFlowControl);
@@ -13,10 +20,7 @@ generatedataThread::generatedataThread(QObject *parent) : QObject(parent)
 
 void generatedataThread::run()
 {
-      for(int i = 0; i <= 50; i++)
-      {
-          qDebug() << i;
-      }
+    qDebug() << "andrei RUN";
 }
 
 void generatedataThread::setRate_slot(int rate)
@@ -26,5 +30,37 @@ void generatedataThread::setRate_slot(int rate)
     else if (rate == 2) port->setBaudRate(QSerialPort::Baud38400);
     else if (rate == 3) port->setBaudRate(QSerialPort::Baud57600);
     else if (rate == 4) port->setBaudRate(QSerialPort::Baud115200);
+}
+
+void generatedataThread::openPort(QString namePort)
+{
+    port->setPortName(namePort);
+    if(!port) emit signalToUIConnectPort(false);
+    if(port->isOpen()) port->close();
+    port->open(QIODevice::ReadWrite);
+    if(port->isOpen())
+    {
+        emit signalToUIConnectPort(true);
+    }else emit signalToUIConnectPort(false);
+}
+
+void generatedataThread::closePort()
+{
+    if (!port) signalToUiDisConnectPort(false);
+    if(port->isOpen())
+    {
+        port->close();
+        flagRecieve_ch1 = true;
+        flagRecieve_ch2 = true;
+        Package_ch1.clear();
+        Package_ch2.clear();
+        sizeInfo_ch1 = 50;
+        sizeInfo_ch2 = 50;
+        sizePackage = 53;
+
+        emit signalToUiDisConnectPort(true);
+
+    }
+    else signalToUiDisConnectPort(false);
 }
 
