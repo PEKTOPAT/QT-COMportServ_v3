@@ -34,9 +34,15 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ObjGenerate, SIGNAL(signalToUIConnectPort(bool)), this, SLOT(slot_push_connect(bool)));
     connect(this, SIGNAL(signalClosePort()), ObjGenerate, SLOT(closePort()));
     connect(ObjGenerate, SIGNAL(signalToUiDisConnectPort(bool)), this, SLOT(slot_push_disconnect(bool)));
+    connect(this, SIGNAL(signalOpenFile(QString)), ObjGenerate, SLOT(openPatternFile(QString)));
+    connect(ui->checkBox_1, SIGNAL(toggled(bool)), ObjGenerate, SLOT(setCheckBox_1(bool)));
+    connect(ui->checkBox_2, SIGNAL(toggled(bool)), ObjGenerate, SLOT(setCheckBox_2(bool)));
+    connect(ui->comboBox_speed_1, SIGNAL(currentTextChanged(QString)), ObjGenerate, SLOT(setComboBox_speed_1(QString)));
+    connect(ui->comboBox_speed_2, SIGNAL(currentTextChanged(QString)), ObjGenerate, SLOT(setComboBox_speed_2(QString)));
+    connect(ui->spinBox, SIGNAL(valueChanged(int)), ObjGenerate, SLOT(setShiftFreq(int)));
 
-    //connect(thread, &QThread::started, ObjGenerate, generatedataThread::run);
     ObjGenerate->moveToThread(thread);
+    thread->start();
 }
 //******************************************************************************
 MainWindow::~MainWindow()
@@ -49,6 +55,31 @@ void MainWindow::debugTextEdit(bool status, QString debMSG)
     if(status) ui->textEdit->append(QTime::currentTime().toString("HH:mm:ss") + " -> " + debMSG);
     else ui->textEdit->append("<font color = red><\\font>" + QTime::currentTime().toString("HH:mm:ss") + " -> " + debMSG);
 }
+
+void MainWindow::openPatternFile()
+{
+    Pattern.clear();
+    QString fileName = QFileDialog::getOpenFileName(this);
+    if(fileName.isEmpty())
+    {
+        debugTextEdit(false, "File isEmpty");
+        return;
+    }
+    QFile file(fileName);
+
+    if(!file.open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+        debugTextEdit(false, "File not open");
+        return;
+    }else debugTextEdit(true, "Control file load");
+    QTextStream in(&file);
+    while(!in.atEnd())
+    {
+        Pattern.append(in.readLine());
+    }
+    emit signalOpenFile(Pattern);
+    return;
+}
 //******************************************************************************
 void MainWindow::on_comboBox_portSpeed_currentIndexChanged(int index)
 {
@@ -57,12 +88,15 @@ void MainWindow::on_comboBox_portSpeed_currentIndexChanged(int index)
 
 void MainWindow::on_push_connect_clicked()
 {
-    thread->start();
     emit signalOpenPort(ui->comboBox_port->currentText());
 }
 void MainWindow::on_push_disconnect_clicked()
 {
     emit signalClosePort();
+}
+void MainWindow::on_push_download_clicked()
+{
+    openPatternFile();
 }
 //******************************************************************************
 //***************************** SLOTS ******************************************
@@ -109,4 +143,10 @@ void MainWindow::slot_push_disconnect(bool status)
     {
         debugTextEdit(false, "Port close error!");
     }
+}
+
+void MainWindow::slot_push_downloadFile(bool status)
+{
+    if(status) debugTextEdit(true, "Control file load");
+    else debugTextEdit(false, "File not open");
 }

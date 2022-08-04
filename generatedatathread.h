@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QSerialPort>
+#include <QFileDialog>
 
 class generatedataThread : public QObject
 {
@@ -22,6 +23,14 @@ private:
     int sizeInfo_ch1;
     int sizeInfo_ch2;
     int sizePackage;
+    QString Pattern;
+    bool checkBox_1;
+    bool checkBox_2;
+    QString comboBox_speed_1;
+    QString comboBox_speed_2;
+    short shiftFreq;
+    int countByte_CH1;
+    int countByte_CH2;
 
 signals:
     void signalToUIConnectPort(bool);
@@ -32,6 +41,13 @@ public slots:
     void setRate_slot(int rate);
     void openPort(QString namePort);
     void closePort();
+    void openPatternFile(QString uiPattern);
+    void generatePackage();
+    void setCheckBox_1(bool current);
+    void setCheckBox_2(bool current);
+    void setComboBox_speed_1(QString current);
+    void setComboBox_speed_2(QString current);
+    void setShiftFreq(int current);
 };
 
 #endif // GENERATEDATATHREAD_H
