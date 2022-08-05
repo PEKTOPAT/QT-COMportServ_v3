@@ -12,6 +12,7 @@ generatedataThread::generatedataThread(QObject *parent) :
 
     flagRecieve_ch1 = true;
     flagRecieve_ch2 = true;
+    flagStopReceive = false;
     sizeInfo_ch1 = 50;
     sizeInfo_ch2 = 50;
     sizePackage = 53;
@@ -26,12 +27,12 @@ generatedataThread::generatedataThread(QObject *parent) :
     port->setStopBits(QSerialPort::OneStop);
     port->setBaudRate(QSerialPort::Baud115200);
 }
-
+//******************************************************************************
 void generatedataThread::run()
 {
     qDebug() << "andrei RUN";
 }
-
+//******************************************************************************
 void generatedataThread::setRate_slot(int rate)
 {
     if(rate == 0) port->setBaudRate(QSerialPort::Baud9600);
@@ -40,7 +41,7 @@ void generatedataThread::setRate_slot(int rate)
     else if (rate == 3) port->setBaudRate(QSerialPort::Baud57600);
     else if (rate == 4) port->setBaudRate(QSerialPort::Baud115200);
 }
-
+//******************************************************************************
 void generatedataThread::openPort(QString namePort)
 {
     port->setPortName(namePort);
@@ -52,7 +53,7 @@ void generatedataThread::openPort(QString namePort)
         emit signalToUIConnectPort(true);
     }else emit signalToUIConnectPort(false);
 }
-
+//******************************************************************************
 void generatedataThread::closePort()
 {
     if (!port) signalToUiDisConnectPort(false);
@@ -72,15 +73,16 @@ void generatedataThread::closePort()
     }
     else signalToUiDisConnectPort(false);
 }
-
+//******************************************************************************
 void generatedataThread::openPatternFile(QString uiPattern)
 {
     Pattern = uiPattern;
 }
-
+//******************************************************************************
 void generatedataThread::generatePackage()
 {
     if(Pattern.size() == 0) return;
+    qDebug() << "TUTA";
     Package_ch1.clear();
     Package_ch2.clear();
     QByteArray convert;
@@ -170,8 +172,54 @@ void generatedataThread::generatePackage()
         }
     }
 }
+//******************************************************************************
+void generatedataThread::sendPackage()
+{
+    qDebug() << "sss" << Pattern.size() << flagRecieve_ch1;
+    flagStopReceive = false;
+    if(Pattern.size() == 0)
+    {
+        qDebug() << "0" << Pattern.size();
+        emit signalToUiSendMsg(0);
+        return;
+    }
+    generatePackage();
+    qDebug() << "sss222" << Pattern.size() << flagRecieve_ch1 << "__" << Package_ch1;
+    if(Package_ch1.size() != 0 && flagRecieve_ch1)
+    {
+        //writePort(Package_ch1);
+        //correctionFreq();
+        qDebug() << "1" << Pattern.size();
+        emit signalToUiSendMsg(1);
 
-
+    }
+    if(Package_ch2.size() != 0 && flagRecieve_ch2)
+    {
+        //        writePort(Package_ch2);
+        //        correctionFreq();
+        qDebug() << "2" << Pattern.size();
+        emit signalToUiSendMsg(2);
+    }
+    flagRecieve_ch1 = false;
+    flagRecieve_ch2 = false;
+    sizeInfo_ch1 = 15;
+    sizeInfo_ch2 = 15;
+    sizePackage = 18;
+}
+//******************************************************************************
+void generatedataThread::stopSendPackage()
+{
+        emit signalToUiStopMsg();
+        sizeInfo_ch1 = 50;
+        sizeInfo_ch2 = 50;
+        sizePackage = 53;
+        flagStopReceive = true;
+        flagRecieve_ch1 = true;
+        flagRecieve_ch2 = true;
+        Package_ch1.clear();
+        Package_ch2.clear();
+}
+//******************************************************************************
 
 
 //******************************************************************************

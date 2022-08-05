@@ -1,6 +1,11 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+
 #include <QTime>
+#include <QMessageBox>
+#include <QDebug>
+#include <QThread>
+#include <QSerialPortInfo>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -30,16 +35,22 @@ MainWindow::MainWindow(QWidget *parent) :
     {
         ui->comboBox_port->addItem(QSerialPortInfo::availablePorts().at(i).portName());
     }
-    connect(this, SIGNAL(signalOpenPort(QString)), ObjGenerate, SLOT(openPort(QString)));
+    connect(this, SIGNAL(signalConnectPort(QString)), ObjGenerate, SLOT(openPort(QString)));
     connect(ObjGenerate, SIGNAL(signalToUIConnectPort(bool)), this, SLOT(slot_push_connect(bool)));
-    connect(this, SIGNAL(signalClosePort()), ObjGenerate, SLOT(closePort()));
+    connect(ui->push_disconnect, SIGNAL(pressed()), ObjGenerate, SLOT(closePort()));
     connect(ObjGenerate, SIGNAL(signalToUiDisConnectPort(bool)), this, SLOT(slot_push_disconnect(bool)));
+    connect(ui->push_download, SIGNAL(pressed()), this, SLOT(openPatternFile()));
     connect(this, SIGNAL(signalOpenFile(QString)), ObjGenerate, SLOT(openPatternFile(QString)));
     connect(ui->checkBox_1, SIGNAL(toggled(bool)), ObjGenerate, SLOT(setCheckBox_1(bool)));
+
     connect(ui->checkBox_2, SIGNAL(toggled(bool)), ObjGenerate, SLOT(setCheckBox_2(bool)));
     connect(ui->comboBox_speed_1, SIGNAL(currentTextChanged(QString)), ObjGenerate, SLOT(setComboBox_speed_1(QString)));
     connect(ui->comboBox_speed_2, SIGNAL(currentTextChanged(QString)), ObjGenerate, SLOT(setComboBox_speed_2(QString)));
     connect(ui->spinBox, SIGNAL(valueChanged(int)), ObjGenerate, SLOT(setShiftFreq(int)));
+    connect(ui->push_start_send, SIGNAL(pressed()), ObjGenerate, SLOT(sendPackage()));
+    connect(ui->push_stop_send, SIGNAL(pressed()), ObjGenerate, SLOT(stopSendPackage()));
+    connect(ObjGenerate, SIGNAL(signalToUiSendMsg(int)), this, SLOT(slot_send_Package(int)));
+    connect(ObjGenerate, SIGNAL(signalToUiStopMsg()), this, SLOT(slot_stop_Package()));
 
     ObjGenerate->moveToThread(thread);
     thread->start();
@@ -55,7 +66,7 @@ void MainWindow::debugTextEdit(bool status, QString debMSG)
     if(status) ui->textEdit->append(QTime::currentTime().toString("HH:mm:ss") + " -> " + debMSG);
     else ui->textEdit->append("<font color = red><\\font>" + QTime::currentTime().toString("HH:mm:ss") + " -> " + debMSG);
 }
-
+//******************************************************************************
 void MainWindow::openPatternFile()
 {
     Pattern.clear();
@@ -80,26 +91,29 @@ void MainWindow::openPatternFile()
     emit signalOpenFile(Pattern);
     return;
 }
+
 //******************************************************************************
 void MainWindow::on_comboBox_portSpeed_currentIndexChanged(int index)
 {
     ObjGenerate->setRate_slot(index);
 }
-
+//******************************************************************************
 void MainWindow::on_push_connect_clicked()
 {
-    emit signalOpenPort(ui->comboBox_port->currentText());
-}
-void MainWindow::on_push_disconnect_clicked()
-{
-    emit signalClosePort();
-}
-void MainWindow::on_push_download_clicked()
-{
-    openPatternFile();
+    emit signalConnectPort(ui->comboBox_port->currentText());
 }
 //******************************************************************************
-//***************************** SLOTS ******************************************
+void MainWindow::on_push_clear_log_clicked()
+{
+
+}
+//******************************************************************************
+void MainWindow::on_push_stop_send_clicked()
+{
+
+}
+//******************************************************************************
+//***************************** SLOTS UI ***************************************
 //******************************************************************************
 void MainWindow::slot_push_connect(bool status)
 {
@@ -119,7 +133,12 @@ void MainWindow::slot_push_connect(bool status)
         debugTextEdit(false, "Port not open!");
     }
 }
+//******************************************************************************
+void MainWindow::on_push_reset_arduin_clicked()
+{
 
+}
+//******************************************************************************
 void MainWindow::slot_push_disconnect(bool status)
 {
     if(status)
@@ -145,8 +164,43 @@ void MainWindow::slot_push_disconnect(bool status)
     }
 }
 
-void MainWindow::slot_push_downloadFile(bool status)
+void MainWindow::slot_send_Package(int status)
 {
-    if(status) debugTextEdit(true, "Control file load");
-    else debugTextEdit(false, "File not open");
+    qDebug() << status << "status";
+    if(status == 0)
+    {
+        QMessageBox::critical(this, "Error", "File not loaded!");
+    }
+    else
+    {
+        ui->checkBox_1->setEnabled(false);
+        ui->checkBox_2->setEnabled(false);
+        ui->push_start_send->setEnabled(false);
+        ui->comboBox_speed_1->setEnabled(false);
+        ui->comboBox_speed_2->setEnabled(false);
+    }
+    if(status == 1)
+    {
+        ui->label_statusPort_1->setText("Up");
+        ui->label_statusPort_1->setStyleSheet("QLabel {font-weight: bold; color : green; }");
+    }
+    if(status == 2)
+    {
+        ui->label_statusPort_3->setText("Up");
+        ui->label_statusPort_3->setStyleSheet("QLabel {font-weight: bold; color : green; }");
+    }
+
+}
+
+void MainWindow::slot_stop_Package()
+{
+            ui->checkBox_1->setEnabled(true);
+            ui->checkBox_2->setEnabled(true);
+            ui->push_start_send->setEnabled(true);
+            ui->comboBox_speed_1->setEnabled(true);
+            ui->comboBox_speed_2->setEnabled(true);
+            ui->label_statusPort_1->setText("Down");
+            ui->label_statusPort_1->setStyleSheet("QLabel {font-weight: bold; color : red; }");
+            ui->label_statusPort_3->setText("Down");
+            ui->label_statusPort_3->setStyleSheet("QLabel {font-weight: bold; color : red; }");
 }

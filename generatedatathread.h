@@ -31,10 +31,13 @@ private:
     short shiftFreq;
     int countByte_CH1;
     int countByte_CH2;
+    bool flagStopReceive;
 
 signals:
     void signalToUIConnectPort(bool);
     void signalToUiDisConnectPort(bool);
+    void signalToUiSendMsg(int);
+    void signalToUiStopMsg();
 
 public slots:
     void run();
@@ -43,6 +46,11 @@ public slots:
     void closePort();
     void openPatternFile(QString uiPattern);
     void generatePackage();
+    void sendPackage();
+    void stopSendPackage();
+
+
+private slots:
     void setCheckBox_1(bool current);
     void setCheckBox_2(bool current);
     void setComboBox_speed_1(QString current);
