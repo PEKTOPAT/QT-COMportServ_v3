@@ -19,16 +19,18 @@ public:
 
 private slots:
 
-    void on_comboBox_portSpeed_currentIndexChanged(int index);
-    void on_push_connect_clicked();
     void slot_push_connect(bool status);
     void slot_push_disconnect(bool status);
     void slot_send_Package(int status);
     void slot_stop_Package();
-    void on_push_reset_arduin_clicked();
+    void slot_reset_Arduino(bool status);
+    void slot_set_Correction_lbl(QString number);
+    void on_comboBox_portSpeed_currentIndexChanged(int index);
+    void on_push_connect_clicked();
     void on_push_clear_log_clicked();
-    void on_push_stop_send_clicked();
     void openPatternFile();
+    void debugTextEdit(bool status, QString debMSG);
+    void refrashPort();
 
 private:
     Ui::MainWindow *ui;
@@ -37,11 +39,12 @@ private:
     int num_port;
     QString namePort;
     QString Pattern;
+    QTimer *timer_RefrashPort;
 
-    void debugTextEdit(bool status, QString debMSG);
 signals:
     void signalConnectPort(QString);
     void signalOpenFile(QString);
+
 };
 
 #endif // MAINWINDOW_H

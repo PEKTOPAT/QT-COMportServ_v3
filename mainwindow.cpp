@@ -2,6 +2,7 @@
 #include "ui_mainwindow.h"
 
 #include <QTime>
+#include <QTimer>
 #include <QMessageBox>
 #include <QDebug>
 #include <QThread>
@@ -18,6 +19,12 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->push_start_send->setDisabled(true);
     ui->push_stop_send->setDisabled(true);
     num_port = QSerialPortInfo::availablePorts().length();
+    timer_RefrashPort = new QTimer();
+    timer_RefrashPort->start(3000);
+    for(int i = 0; i < num_port; i++)
+    {
+        ui->comboBox_port->addItem(QSerialPortInfo::availablePorts().at(i).portName());
+    }
 
     ui->comboBox_portSpeed->addItem("115200");
     ui->comboBox_speed_1->addItem("1,2");
@@ -31,10 +38,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->label_statusPort_3->setText("Down");
     ui->label_statusPort_3->setStyleSheet("QLabel {font-weight: bold; color : red; }");
 
-    for(int i = 0; i < num_port; i++)
-    {
-        ui->comboBox_port->addItem(QSerialPortInfo::availablePorts().at(i).portName());
-    }
+
     connect(this, SIGNAL(signalConnectPort(QString)), ObjGenerate, SLOT(openPort(QString)));
     connect(ObjGenerate, SIGNAL(signalToUIConnectPort(bool)), this, SLOT(slot_push_connect(bool)));
     connect(ui->push_disconnect, SIGNAL(pressed()), ObjGenerate, SLOT(closePort()));
@@ -51,6 +55,10 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->push_stop_send, SIGNAL(pressed()), ObjGenerate, SLOT(stopSendPackage()));
     connect(ObjGenerate, SIGNAL(signalToUiSendMsg(int)), this, SLOT(slot_send_Package(int)));
     connect(ObjGenerate, SIGNAL(signalToUiStopMsg()), this, SLOT(slot_stop_Package()));
+    connect(ObjGenerate, SIGNAL(signalDebugTextEdit(bool,QString)), this, SLOT(debugTextEdit(bool,QString)));
+    connect(ui->push_reset_arduin, SIGNAL(pressed()), ObjGenerate, SLOT(reset_Arduino()));
+    connect(ObjGenerate, SIGNAL(signalToUiResetArduino(bool)), this, SLOT(slot_reset_Arduino(bool)));
+    connect(ObjGenerate, SIGNAL(signalToUiSetCorrection(QString)), this, SLOT(slot_set_Correction_lbl(QString)));
 
     ObjGenerate->moveToThread(thread);
     thread->start();
@@ -65,6 +73,19 @@ void MainWindow::debugTextEdit(bool status, QString debMSG)
 {
     if(status) ui->textEdit->append(QTime::currentTime().toString("HH:mm:ss") + " -> " + debMSG);
     else ui->textEdit->append("<font color = red><\\font>" + QTime::currentTime().toString("HH:mm:ss") + " -> " + debMSG);
+}
+
+void MainWindow::refrashPort()
+{
+    if(num_port != (QSerialPortInfo::availablePorts().length()))
+    {
+        num_port = QSerialPortInfo::availablePorts().length();
+        ui->comboBox_port->clear();
+        for(int i = 0; i < num_port; i++)
+        {
+            ui->comboBox_port->addItem(QSerialPortInfo::availablePorts().at(i).portName());
+        }
+    }
 }
 //******************************************************************************
 void MainWindow::openPatternFile()
@@ -105,12 +126,7 @@ void MainWindow::on_push_connect_clicked()
 //******************************************************************************
 void MainWindow::on_push_clear_log_clicked()
 {
-
-}
-//******************************************************************************
-void MainWindow::on_push_stop_send_clicked()
-{
-
+    ui->textEdit->clear();
 }
 //******************************************************************************
 //***************************** SLOTS UI ***************************************
@@ -132,11 +148,6 @@ void MainWindow::slot_push_connect(bool status)
     {
         debugTextEdit(false, "Port not open!");
     }
-}
-//******************************************************************************
-void MainWindow::on_push_reset_arduin_clicked()
-{
-
 }
 //******************************************************************************
 void MainWindow::slot_push_disconnect(bool status)
@@ -163,44 +174,71 @@ void MainWindow::slot_push_disconnect(bool status)
         debugTextEdit(false, "Port close error!");
     }
 }
-
+//******************************************************************************
 void MainWindow::slot_send_Package(int status)
 {
-    qDebug() << status << "status";
     if(status == 0)
     {
         QMessageBox::critical(this, "Error", "File not loaded!");
+        return;
     }
-    else
-    {
-        ui->checkBox_1->setEnabled(false);
-        ui->checkBox_2->setEnabled(false);
-        ui->push_start_send->setEnabled(false);
-        ui->comboBox_speed_1->setEnabled(false);
-        ui->comboBox_speed_2->setEnabled(false);
-    }
+    ui->checkBox_1->setEnabled(false);
+    ui->checkBox_2->setEnabled(false);
+    ui->push_start_send->setEnabled(false);
+    ui->comboBox_speed_1->setEnabled(false);
+    ui->comboBox_speed_2->setEnabled(false);
+
     if(status == 1)
     {
         ui->label_statusPort_1->setText("Up");
         ui->label_statusPort_1->setStyleSheet("QLabel {font-weight: bold; color : green; }");
+        return;
     }
     if(status == 2)
     {
         ui->label_statusPort_3->setText("Up");
         ui->label_statusPort_3->setStyleSheet("QLabel {font-weight: bold; color : green; }");
+        return;
     }
-
 }
-
+//******************************************************************************
 void MainWindow::slot_stop_Package()
 {
-            ui->checkBox_1->setEnabled(true);
-            ui->checkBox_2->setEnabled(true);
-            ui->push_start_send->setEnabled(true);
-            ui->comboBox_speed_1->setEnabled(true);
-            ui->comboBox_speed_2->setEnabled(true);
-            ui->label_statusPort_1->setText("Down");
-            ui->label_statusPort_1->setStyleSheet("QLabel {font-weight: bold; color : red; }");
-            ui->label_statusPort_3->setText("Down");
-            ui->label_statusPort_3->setStyleSheet("QLabel {font-weight: bold; color : red; }");
+    ui->checkBox_1->setEnabled(true);
+    ui->checkBox_2->setEnabled(true);
+    ui->push_start_send->setEnabled(true);
+    ui->comboBox_speed_1->setEnabled(true);
+    ui->comboBox_speed_2->setEnabled(true);
+    ui->label_statusPort_1->setText("Down");
+    ui->label_statusPort_1->setStyleSheet("QLabel {font-weight: bold; color : red; }");
+    ui->label_statusPort_3->setText("Down");
+    ui->label_statusPort_3->setStyleSheet("QLabel {font-weight: bold; color : red; }");
 }
+//******************************************************************************
+void MainWindow::slot_reset_Arduino(bool status)
+{
+    if(status)
+    {
+        debugTextEdit(true, "Reset arduino");
+        ui->checkBox_1->setEnabled(true);
+        ui->checkBox_2->setEnabled(true);
+        ui->push_start_send->setEnabled(true);
+        ui->comboBox_speed_1->setEnabled(true);
+        ui->comboBox_speed_2->setEnabled(true);
+        ui->label_statusPort_1->setText("Down");
+        ui->label_statusPort_1->setStyleSheet("QLabel {font-weight: bold; color : red; }");
+        ui->label_statusPort_3->setText("Down");
+        ui->label_statusPort_3->setStyleSheet("QLabel {font-weight: bold; color : red; }");
+    }
+    else
+    {
+        debugTextEdit(false, "Reset err. No connect");
+        return;
+    }
+}
+//******************************************************************************
+void MainWindow::slot_set_Correction_lbl(QString number)
+{
+    ui->lbl_correction->setText(number);
+}
+//******************************************************************************

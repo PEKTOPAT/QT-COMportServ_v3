@@ -19,6 +19,8 @@ generatedataThread::generatedataThread(QObject *parent) :
     shiftFreq = 0;
     countByte_CH1 = 0;
     countByte_CH2 = 0;
+    flagMain = false;
+    correction_Freq = 0;
 
     port = new QSerialPort(this);
     port->setDataBits(QSerialPort::Data8);
@@ -26,12 +28,10 @@ generatedataThread::generatedataThread(QObject *parent) :
     port->setParity(QSerialPort::NoParity);
     port->setStopBits(QSerialPort::OneStop);
     port->setBaudRate(QSerialPort::Baud115200);
+
+    connect(port, SIGNAL(readyRead()), this, SLOT(readPort()));
 }
-//******************************************************************************
-void generatedataThread::run()
-{
-    qDebug() << "andrei RUN";
-}
+
 //******************************************************************************
 void generatedataThread::setRate_slot(int rate)
 {
@@ -82,7 +82,6 @@ void generatedataThread::openPatternFile(QString uiPattern)
 void generatedataThread::generatePackage()
 {
     if(Pattern.size() == 0) return;
-    qDebug() << "TUTA";
     Package_ch1.clear();
     Package_ch2.clear();
     QByteArray convert;
@@ -175,31 +174,27 @@ void generatedataThread::generatePackage()
 //******************************************************************************
 void generatedataThread::sendPackage()
 {
-    qDebug() << "sss" << Pattern.size() << flagRecieve_ch1;
     flagStopReceive = false;
     if(Pattern.size() == 0)
     {
-        qDebug() << "0" << Pattern.size();
         emit signalToUiSendMsg(0);
         return;
     }
     generatePackage();
-    qDebug() << "sss222" << Pattern.size() << flagRecieve_ch1 << "__" << Package_ch1;
     if(Package_ch1.size() != 0 && flagRecieve_ch1)
     {
-        //writePort(Package_ch1);
-        //correctionFreq();
-        qDebug() << "1" << Pattern.size();
+        writePort(Package_ch1);
+        correctionFreq();
         emit signalToUiSendMsg(1);
 
     }
     if(Package_ch2.size() != 0 && flagRecieve_ch2)
     {
-        //        writePort(Package_ch2);
-        //        correctionFreq();
-        qDebug() << "2" << Pattern.size();
+        writePort(Package_ch2);
+        correctionFreq();
         emit signalToUiSendMsg(2);
     }
+
     flagRecieve_ch1 = false;
     flagRecieve_ch2 = false;
     sizeInfo_ch1 = 15;
@@ -220,6 +215,214 @@ void generatedataThread::stopSendPackage()
         Package_ch2.clear();
 }
 //******************************************************************************
+void generatedataThread::writePort(QByteArray data)
+{
+    port->write(data);
+}
+//******************************************************************************
+void generatedataThread::readPort()
+{
+    qDebug() << "ReadSlot";
+    if(flagStopReceive)
+    {
+        port->clear(QSerialPort::AllDirections);
+        return;
+    }
+    QByteArray data;
+    QByteArray transit;
+    if (port->bytesAvailable() == 0) return;
+    data = port->readAll();
+    qDebug() << data;
+    for(int i = 0; i < data.size(); i++)
+    {
+        transit.clear();
+        transit.append(data[i]);
+        const QString tab = " ";
+        QString strData;
+        int intData = static_cast<quint8>(transit.at(0));
+        for (int i = 0;i < transit.size();i++)
+        {
+            strData = strData+QString("%1").arg(intData)+tab;
+        }
+        strData.resize(strData.length() - 1);
+        if(!flagMain && strData == "170") flagMain = true;
+        else if (flagMain)
+        {
+            if(strData == "64")
+            {
+                flagRecieve_ch1 = true;
+                sendPackage();
+                flagMain = false;
+            }
+            else if(strData == "65")
+            {
+                flagRecieve_ch1 = true;
+                sendPackage();
+                flagMain = false;
+            }
+            else if(strData == "67")
+            {
+                flagMain = false;
+            }
+            else if(strData == "71")
+            {
+                flagMain = false;
+            }
+            else if(strData == "128")
+            {
+                flagRecieve_ch2 = true;
+                sendPackage();
+                flagMain = false;
+            }
+            else if(strData == "136")
+            {
+                flagRecieve_ch2 = true;
+                sendPackage();
+                flagMain = false;
+            }
+            else if(strData == "152")
+            {
+                flagMain = false;
+            }
+            else if(strData == "184")
+            {
+                flagMain = false;
+            }
+            else if(strData == "201")
+            {
+
+                flagRecieve_ch1 = true;
+                flagRecieve_ch2 = true;
+                sendPackage();
+                flagMain = false;
+            }
+            else if(strData == "217")
+            {
+                flagRecieve_ch1 = true;
+                sendPackage();
+                flagMain = false;
+            }
+            else if(strData == "249")
+            {
+                flagRecieve_ch1 = true;
+                sendPackage();
+                flagMain = false;
+            }
+            else if(strData == "203")
+            {
+
+                flagRecieve_ch2 = true;
+                sendPackage();
+                flagMain = false;
+            }
+            else if(strData == "207")
+            {
+                flagRecieve_ch2 = true;
+                sendPackage();
+                flagMain = false;
+            }
+            else if((strData == "219")||(strData == "223")||(strData == "251")||(strData == "255"))
+            {
+                flagMain = false;
+            }
+            else if(strData == "0")
+            {
+                flagMain = false;
+                signalDebugTextEdit(false, "BufferEmpty");
+                stopSendPackage();
+            }
+            else
+            {
+                signalDebugTextEdit(false, "Err read data!");
+                flagMain = false;
+            }
+        }
+        else
+        {
+            signalDebugTextEdit(true, "Waiting to start");
+            return;
+        }
+    }
+    return;
+}
+
+void generatedataThread::correctionFreq()
+{
+    if(checkBox_1)
+    {
+        if(comboBox_speed_1 == "1,2")
+        {
+            double speed = 13333;
+            correction_Freq = 16000000 / speed;
+            double helper = 16000000 / (speed + shiftFreq);
+            correction_Freq = helper - correction_Freq;
+        }
+        else if(comboBox_speed_1 == "2,4")
+        {
+            double speed = 6667;
+            correction_Freq = 16000000 / speed;
+            double helper = 16000000 / (speed + shiftFreq);
+            correction_Freq = helper - correction_Freq;
+        }
+        else if(comboBox_speed_1 == "4,8")
+        {
+            double speed = 3333;
+            correction_Freq = 16000000 / speed;
+            double helper = 16000000 / (speed + shiftFreq);
+            correction_Freq = helper - correction_Freq;
+        }
+        emit signalToUiSetCorrection(QString::number(correction_Freq, 'f', 3));
+        //ui->lbl_correction->setText(QString::number(correction_Freq, 'f', 3));
+    }
+    else if(checkBox_2)
+    {
+        if(comboBox_speed_2 == "1,2")
+        {
+            double speed = 13333;
+            correction_Freq = 16000000 / speed;
+            double helper = 16000000 / (speed + shiftFreq);
+            correction_Freq = helper - correction_Freq;
+        }
+        else if(comboBox_speed_2 == "2,4")
+        {
+            double speed = 6667;
+            correction_Freq = 16000000 / speed;
+            double helper = 16000000 / (speed + shiftFreq);
+            correction_Freq = helper - correction_Freq;
+        }
+        else if(comboBox_speed_2 == "4,8")
+        {
+            double speed = 3333;
+            correction_Freq = 16000000 / speed;
+            double helper = 16000000 / (speed + shiftFreq);
+            correction_Freq = helper - correction_Freq;
+        }
+        emit signalToUiSetCorrection(QString::number(correction_Freq, 'f', 3));
+    }
+}
+//******************************************************************************
+void generatedataThread::reset_Arduino()
+{
+    QByteArray msg;
+    msg.append(170);
+    if(port->isOpen())
+    {
+        writePort(msg);
+        flagRecieve_ch1 = true;
+        flagRecieve_ch2 = true;
+        Package_ch1.clear();
+        Package_ch2.clear();
+        sizeInfo_ch1 = 50;
+        sizeInfo_ch2 = 50;
+        sizePackage = 53;
+        emit signalToUiResetArduino(true);
+    }
+    else
+    {
+        emit signalToUiResetArduino(false);
+        return;
+    }
+}
 
 
 //******************************************************************************
@@ -249,5 +452,3 @@ void generatedataThread::setShiftFreq(int current)
 {
     shiftFreq = current;
 }
-
-

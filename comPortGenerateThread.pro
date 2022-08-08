@@ -20,3 +20,6 @@ HEADERS  += mainwindow.h \
     generatedatathread.h
 
 FORMS    += mainwindow.ui
+
+RESOURCES +=
+RC_FILE = server.rc
