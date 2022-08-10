@@ -29,17 +29,17 @@ generatedataThread::generatedataThread(QObject *parent) :
     port->setStopBits(QSerialPort::OneStop);
     port->setBaudRate(QSerialPort::Baud115200);
 
-    connect(port, SIGNAL(readyRead()), this, SLOT(readPort()));
+    //connect(port, SIGNAL(readyRead()), this, SLOT(readPort()));
 }
 
 //******************************************************************************
-void generatedataThread::setRate_slot(int rate)
+void generatedataThread::setRate_slot(QString rate)
 {
-    if(rate == 0) port->setBaudRate(QSerialPort::Baud9600);
-    else if (rate == 1) port->setBaudRate(QSerialPort::Baud19200);
-    else if (rate == 2) port->setBaudRate(QSerialPort::Baud38400);
-    else if (rate == 3) port->setBaudRate(QSerialPort::Baud57600);
-    else if (rate == 4) port->setBaudRate(QSerialPort::Baud115200);
+    if(rate == "9600") port->setBaudRate(QSerialPort::Baud9600);
+    else if (rate == "19200") port->setBaudRate(QSerialPort::Baud19200);
+    else if (rate == "38400") port->setBaudRate(QSerialPort::Baud38400);
+    else if (rate == "57600") port->setBaudRate(QSerialPort::Baud57600);
+    else if (rate == "115200") port->setBaudRate(QSerialPort::Baud115200);
 }
 //******************************************************************************
 void generatedataThread::openPort(QString namePort)
@@ -222,7 +222,6 @@ void generatedataThread::writePort(QByteArray data)
 //******************************************************************************
 void generatedataThread::readPort()
 {
-    qDebug() << "ReadSlot";
     if(flagStopReceive)
     {
         port->clear(QSerialPort::AllDirections);
@@ -232,7 +231,6 @@ void generatedataThread::readPort()
     QByteArray transit;
     if (port->bytesAvailable() == 0) return;
     data = port->readAll();
-    qDebug() << data;
     for(int i = 0; i < data.size(); i++)
     {
         transit.clear();

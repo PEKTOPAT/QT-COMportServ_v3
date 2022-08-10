@@ -21,6 +21,7 @@ MainWindow::MainWindow(QWidget *parent) :
     num_port = QSerialPortInfo::availablePorts().length();
     timer_RefrashPort = new QTimer();
     timer_RefrashPort->start(3000);
+    flagSending = false;
     for(int i = 0; i < num_port; i++)
     {
         ui->comboBox_port->addItem(QSerialPortInfo::availablePorts().at(i).portName());
@@ -59,6 +60,9 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->push_reset_arduin, SIGNAL(pressed()), ObjGenerate, SLOT(reset_Arduino()));
     connect(ObjGenerate, SIGNAL(signalToUiResetArduino(bool)), this, SLOT(slot_reset_Arduino(bool)));
     connect(ObjGenerate, SIGNAL(signalToUiSetCorrection(QString)), this, SLOT(slot_set_Correction_lbl(QString)));
+    connect(timer_RefrashPort, SIGNAL(timeout()), this, SLOT(refrashPort()));
+    connect(ObjGenerate->port, SIGNAL(readyRead()), ObjGenerate, SLOT(readPort()));
+
 
     ObjGenerate->moveToThread(thread);
     thread->start();
@@ -114,9 +118,9 @@ void MainWindow::openPatternFile()
 }
 
 //******************************************************************************
-void MainWindow::on_comboBox_portSpeed_currentIndexChanged(int index)
+void MainWindow::on_comboBox_portSpeed_currentTextChanged(const QString &arg1)
 {
-    ObjGenerate->setRate_slot(index);
+    ObjGenerate->setRate_slot(arg1);
 }
 //******************************************************************************
 void MainWindow::on_push_connect_clicked()
@@ -148,6 +152,7 @@ void MainWindow::slot_push_connect(bool status)
     {
         debugTextEdit(false, "Port not open!");
     }
+    flagSending = false;
 }
 //******************************************************************************
 void MainWindow::slot_push_disconnect(bool status)
@@ -164,10 +169,13 @@ void MainWindow::slot_push_disconnect(bool status)
         ui->push_start_send->setEnabled(true);
         ui->comboBox_speed_1->setEnabled(true);
         ui->comboBox_speed_2->setEnabled(true);
+        ui->push_start_send->setEnabled(false);
+        ui->push_stop_send->setEnabled(false);
         ui->label_statusPort_1->setText("Down");
         ui->label_statusPort_1->setStyleSheet("QLabel {font-weight: bold; color : red; }");
         ui->label_statusPort_3->setText("Down");
         ui->label_statusPort_3->setStyleSheet("QLabel {font-weight: bold; color : red; }");
+        flagSending = false;
     }
     else
     {
@@ -182,12 +190,21 @@ void MainWindow::slot_send_Package(int status)
         QMessageBox::critical(this, "Error", "File not loaded!");
         return;
     }
+    if(!flagSending)
+    {
     ui->checkBox_1->setEnabled(false);
     ui->checkBox_2->setEnabled(false);
     ui->push_start_send->setEnabled(false);
     ui->comboBox_speed_1->setEnabled(false);
     ui->comboBox_speed_2->setEnabled(false);
-
+    ui->push_disconnect->setEnabled(false);
+    ui->push_download->setEnabled(false);
+    ui->comboBox_port->setEnabled(false);
+    ui->comboBox_portSpeed->setEnabled(false);
+    ui->push_reset_arduin->setEnabled(false);
+    debugTextEdit(true, "Sending");
+    flagSending = true;
+    }
     if(status == 1)
     {
         ui->label_statusPort_1->setText("Up");
@@ -204,15 +221,22 @@ void MainWindow::slot_send_Package(int status)
 //******************************************************************************
 void MainWindow::slot_stop_Package()
 {
+    debugTextEdit(true, "Stop");
     ui->checkBox_1->setEnabled(true);
     ui->checkBox_2->setEnabled(true);
     ui->push_start_send->setEnabled(true);
     ui->comboBox_speed_1->setEnabled(true);
     ui->comboBox_speed_2->setEnabled(true);
+    ui->push_disconnect->setEnabled(true);
+    ui->push_download->setEnabled(true);
+    ui->comboBox_port->setEnabled(true);
+    ui->comboBox_portSpeed->setEnabled(true);
+    ui->push_reset_arduin->setEnabled(true);
     ui->label_statusPort_1->setText("Down");
     ui->label_statusPort_1->setStyleSheet("QLabel {font-weight: bold; color : red; }");
     ui->label_statusPort_3->setText("Down");
     ui->label_statusPort_3->setStyleSheet("QLabel {font-weight: bold; color : red; }");
+    flagSending = false;
 }
 //******************************************************************************
 void MainWindow::slot_reset_Arduino(bool status)

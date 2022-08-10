@@ -11,7 +11,6 @@ class generatedataThread : public QObject
 
 public:
     explicit generatedataThread(QObject *parent = 0);
-    QString message;
     QSerialPort *port;
 
 private:
@@ -45,7 +44,7 @@ signals:
     void signalToUiSetCorrection(QString);
 
 public slots:
-    void setRate_slot(int rate);
+    void setRate_slot(QString rate);
 
 private slots:
     void openPort(QString namePort);
