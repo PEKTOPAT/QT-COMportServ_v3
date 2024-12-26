@@ -31,9 +31,13 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->comboBox_speed_1->addItem("1,2");
     ui->comboBox_speed_1->addItem("2,4");
     ui->comboBox_speed_1->addItem("4,8");
+    ui->comboBox_speed_1->addItem("9,6");
+
     ui->comboBox_speed_2->addItem("1,2");
     ui->comboBox_speed_2->addItem("2,4");
     ui->comboBox_speed_2->addItem("4,8");
+    ui->comboBox_speed_2->addItem("9,6");
+
     ui->label_statusPort_1->setText("Down");
     ui->label_statusPort_1->setStyleSheet("QLabel {font-weight: bold; color : red; }");
     ui->label_statusPort_3->setText("Down");

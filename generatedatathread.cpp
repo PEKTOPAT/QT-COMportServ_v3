@@ -88,7 +88,20 @@ void generatedataThread::generatePackage()
     convert = Pattern.toLocal8Bit();
     if(checkBox_1)
     {
-        if(comboBox_speed_1 == "1,2")
+        if (comboBox_speed_1 == "1,2")
+        {
+            Package_ch1.append(171);
+            Package_ch1.append(32);
+            Package_ch1.append(shiftFreq);
+            Package_ch1.append(sizeInfo_ch1);
+            for(int j = 0; j < sizeInfo_ch1; j++)
+            {
+                Package_ch1.append(convert.at(countByte_CH1));
+                countByte_CH1++;
+                if(countByte_CH1 > Pattern.length()) countByte_CH1 = 0;
+            }
+        }
+        else if(comboBox_speed_1 == "2,4")
         {
             Package_ch1.append(171);
             Package_ch1.append(33);
@@ -101,7 +114,7 @@ void generatedataThread::generatePackage()
                 if(countByte_CH1 > Pattern.length()) countByte_CH1 = 0;
             }
         }
-        else if (comboBox_speed_1 == "2,4")
+        else if (comboBox_speed_1 == "4,8")
         {
             Package_ch1.append(171);
             Package_ch1.append(34);
@@ -114,7 +127,7 @@ void generatedataThread::generatePackage()
                 if(countByte_CH1 > Pattern.length()) countByte_CH1 = 0;
             }
         }
-        else if (comboBox_speed_1 == "4,8")
+        else if (comboBox_speed_1 == "9,6")
         {
             Package_ch1.append(171);
             Package_ch1.append(35);
@@ -130,7 +143,20 @@ void generatedataThread::generatePackage()
     }
     if(checkBox_2)
     {
-        if(comboBox_speed_2 == "1,2")
+        if (comboBox_speed_1 == "1,2")
+        {
+            Package_ch1.append(171);
+            Package_ch1.append(64);
+            Package_ch1.append(shiftFreq);
+            Package_ch1.append(sizeInfo_ch1);
+            for(int j = 0; j < sizeInfo_ch1; j++)
+            {
+                Package_ch1.append(convert.at(countByte_CH1));
+                countByte_CH1++;
+                if(countByte_CH1 > Pattern.length()) countByte_CH1 = 0;
+            }
+        }
+        else if(comboBox_speed_2 == "2,4")
         {
             Package_ch2.append(171);
             Package_ch2.append(68);
@@ -143,7 +169,7 @@ void generatedataThread::generatePackage()
                 if(countByte_CH2 == Pattern.length()) countByte_CH2 = 0;
             }
         }
-        else if (comboBox_speed_2 == "2,4")
+        else if (comboBox_speed_2 == "4,8")
         {
             Package_ch2.append(171);
             Package_ch2.append(72);
@@ -156,7 +182,7 @@ void generatedataThread::generatePackage()
                 if(countByte_CH2 == Pattern.length()) countByte_CH2 = 0;
             }
         }
-        else if (comboBox_speed_2 == "4,8")
+        else if (comboBox_speed_2 == "9,6")
         {
             Package_ch2.append(171);
             Package_ch2.append(76);
