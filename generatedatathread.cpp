@@ -143,17 +143,17 @@ void generatedataThread::generatePackage()
     }
     if(checkBox_2)
     {
-        if (comboBox_speed_1 == "1,2")
+        if (comboBox_speed_2 == "1,2")
         {
-            Package_ch1.append(171);
-            Package_ch1.append(64);
-            Package_ch1.append(shiftFreq);
-            Package_ch1.append(sizeInfo_ch1);
-            for(int j = 0; j < sizeInfo_ch1; j++)
+            Package_ch2.append(171);
+            Package_ch2.append(64);
+            Package_ch2.append(shiftFreq);
+            Package_ch2.append(sizeInfo_ch2);
+            for(int j = 0; j < sizeInfo_ch2; j++)
             {
-                Package_ch1.append(convert.at(countByte_CH1));
-                countByte_CH1++;
-                if(countByte_CH1 > Pattern.length()) countByte_CH1 = 0;
+                Package_ch2.append(convert.at(countByte_CH2));
+                countByte_CH2++;
+                if(countByte_CH2 > Pattern.length()) countByte_CH2 = 0;
             }
         }
         else if(comboBox_speed_2 == "2,4")
@@ -395,6 +395,13 @@ void generatedataThread::correctionFreq()
             double helper = 16000000 / (speed + shiftFreq);
             correction_Freq = helper - correction_Freq;
         }
+        else if(comboBox_speed_1 == "9,6")
+        {
+            double speed = 1666;
+            correction_Freq = 16000000 / speed;
+            double helper = 16000000 / (speed + shiftFreq);
+            correction_Freq = helper - correction_Freq;
+        }
         emit signalToUiSetCorrection(QString::number(correction_Freq, 'f', 3));
         //ui->lbl_correction->setText(QString::number(correction_Freq, 'f', 3));
     }
@@ -417,6 +424,13 @@ void generatedataThread::correctionFreq()
         else if(comboBox_speed_2 == "4,8")
         {
             double speed = 3333;
+            correction_Freq = 16000000 / speed;
+            double helper = 16000000 / (speed + shiftFreq);
+            correction_Freq = helper - correction_Freq;
+        }
+        else if(comboBox_speed_2 == "9,6")
+        {
+            double speed = 1666;
             correction_Freq = 16000000 / speed;
             double helper = 16000000 / (speed + shiftFreq);
             correction_Freq = helper - correction_Freq;
